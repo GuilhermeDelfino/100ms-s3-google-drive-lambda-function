@@ -1,4 +1,19 @@
 {
   "name": "file-google-drive",
-  "packageManager": "yarn@4.6.0"
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zip": "rm -f deployment-package.zip && zip -r deployment-package.zip . -x \"**/.*\""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.797.0",
+    "dotenv": "^16.5.0",
+    "googleapis": "^148.0.0",
+    "mysql2": "^3.14.1"
+  }
 }
