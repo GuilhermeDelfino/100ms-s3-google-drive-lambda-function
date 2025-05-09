@@ -23,14 +23,14 @@ async function getGoogleAuth(): Promise<any> {
 /**
  * Faz upload de um arquivo binário para o Google Drive e retorna o link público.
  */
-export async function uploadToGoogleDrive(fileBuffer: Buffer | Readable, fileName: string): Promise<string> {
+export async function uploadToGoogleDrive(fileBuffer: Buffer | Readable, fileName: string, folderId: string): Promise<string> {
   try {
     const authClient = await getGoogleAuth();
     const drive = google.drive({ version: 'v3', auth: authClient });
 
     const fileMetadata: drive_v3.Schema$File = {
       name: fileName,
-      parents: [GOOGLE_DRIVE_FOLDER_ID!],
+      parents: [folderId || GOOGLE_DRIVE_FOLDER_ID!],
     };
 
     const media = {

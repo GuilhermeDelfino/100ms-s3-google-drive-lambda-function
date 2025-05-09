@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf dist lambda-package lambda.zip deployment-package.zip",
-    "build": "npm run clean && node build.mjs",
+    "build": "npm run clean && node build.mjs && cp admobi4tech-a4fedc848dcb.json lambda-package/*",
     "zip-deploy": "cd lambda-package && zip -r ../lambda.zip . && cd ..",
     "upload-lambda": "aws lambda update-function-code --function-name s3-to-google-drive --zip-file fileb://lambda.zip",
     "deploy": "npm run build && npm run zip-deploy && npm run upload-lambda"

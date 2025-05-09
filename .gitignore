@@ -14,4 +14,8 @@
 
 node_modules/
 .env
-*.json
+*.zip
+lambda-package/
+dist*
+lambda.zip
+admobi4tech-a4fedc848dcb.json
