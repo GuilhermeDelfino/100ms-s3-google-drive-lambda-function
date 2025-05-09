@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "zip": "rm -f deployment-package.zip && zip -r deployment-package.zip . -x \"**/.*\""
+    "clean": "rm -rf dist lambda-package lambda.zip deployment-package.zip",
+    "build": "npm run clean && node build.mjs",
+    "zip-deploy": "cd lambda-package && zip -r ../lambda.zip . && cd ..",
+    "upload-lambda": "aws lambda update-function-code --function-name s3-to-google-drive --zip-file fileb://lambda.zip",
+    "deploy": "npm run build && npm run zip-deploy && npm run upload-lambda"
   },
   "author": "",
   "license": "ISC",
@@ -15,5 +18,11 @@
     "dotenv": "^16.5.0",
     "googleapis": "^148.0.0",
     "mysql2": "^3.14.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.15.17",
+    "esbuild": "^0.25.4",
+    "typescript": "^5.8.3"
   }
 }
