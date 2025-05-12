@@ -3,11 +3,6 @@
         "source.fixAll.eslint": "always",
         "source.organizeImports": "explicit"
     },
-    "eslint.validate": [
-        "javascript",
-        "typescript"
-    ],
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "eslint.format.enable": true
 }

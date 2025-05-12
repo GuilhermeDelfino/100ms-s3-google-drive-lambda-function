@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
 import mysql, { Connection, RowDataPacket } from 'mysql2/promise';
+import { Readable } from 'stream';
 import { uploadToGoogleDrive } from '../googleDrive/googleDriveUtils';
-
+dotenv.config();
 
 // Verificações das variáveis de ambiente
 const DB_HOST = process.env.DB_HOST;
@@ -38,7 +40,7 @@ export type Reuniao = {
  * @param link - A URL da gravação a ser associada
  */
 // Processa a reunião e envia o arquivo ao Google Drive
-export async function processReuniao(recordId: string, fileBuffer: Buffer): Promise<string> {
+export async function processReuniao(recordId: string, fileBuffer: Readable): Promise<string> {
 
   const connection = await createDbConnection();
 

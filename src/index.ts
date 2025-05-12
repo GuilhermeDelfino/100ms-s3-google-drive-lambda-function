@@ -1,6 +1,8 @@
 import { S3Event, S3EventRecord } from 'aws-lambda';
+import dotenv from 'dotenv';
 import { processReuniao } from './db/dbUtils';
 import { deleteFromS3, downloadFromS3, isVideoFile } from './s3/s3Utils';
+dotenv.config();
 
 export const handler = async (event: S3Event) => {
   try {

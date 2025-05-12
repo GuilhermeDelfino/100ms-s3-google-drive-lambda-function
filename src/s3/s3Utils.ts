@@ -1,6 +1,7 @@
 import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import dotenv from 'dotenv';
 import { Readable } from 'stream';
-
+dotenv.config();
 const region = process.env.AWS_REGION;
 if (!region) {
   throw new Error('AWS_REGION não definida no .env');
@@ -19,19 +20,41 @@ export function isVideoFile(fileName: string): boolean {
 }
 
 /**
- * Baixa um objeto do S3 como buffer.
+ * Baixa um objeto do S3 como Readable.
  */
-export async function downloadFromS3(bucketName: string, objectKey: string): Promise<Buffer | null> {
+
+export async function downloadFromS3(bucketName: string, objectKey: string): Promise<Readable | null> {
   try {
     const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
     const { Body } = await s3Client.send(command);
 
-    if (!Body || !(Body instanceof Readable)) {
-      console.error('Objeto retornado não é um stream legível');
+    if (!Body) {
+      console.error('Body não está presente na resposta do S3');
       return null;
     }
 
-    return await streamToBuffer(Body);
+    // Verifica se é Web ReadableStream (em runtime)
+    if (typeof (Body as any).getReader === 'function') {
+      const reader = (Body as any).getReader();
+      return new Readable({
+        async read() {
+          const { done, value } = await reader.read();
+          if (done) {
+            this.push(null);
+          } else {
+            this.push(Buffer.from(value));
+          }
+        },
+      });
+    }
+
+    // Se já for um Node.js Readable
+    if (Body instanceof Readable) {
+      return Body;
+    }
+
+    console.error('Formato do Body inesperado.');
+    return null;
   } catch (error) {
     console.error('Erro ao baixar arquivo do S3:', error);
     return null;

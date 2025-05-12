@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
 import { drive_v3, google } from 'googleapis';
 import path from 'path';
 import { Readable } from 'stream';
+dotenv.config();
 
 const GOOGLE_DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
 const GOOGLE_DRIVE_KEY_FILE = process.env.GOOGLE_DRIVE_KEY_FILE;
@@ -35,7 +37,7 @@ export async function uploadToGoogleDrive(fileBuffer: Buffer | Readable, fileNam
 
     const media = {
       mimeType: 'application/octet-stream',
-      body: fileBuffer,
+      body: fileBuffer instanceof Readable ? fileBuffer : Readable.from(fileBuffer),
     };
 
     const response = await drive.files.create({
