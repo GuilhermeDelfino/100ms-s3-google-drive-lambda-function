@@ -1,7 +1,7 @@
-import dotenv from 'dotenv';
-import mysql, { Connection, RowDataPacket } from 'mysql2/promise';
-import { Readable } from 'stream';
-import { uploadToGoogleDrive } from '../googleDrive/googleDriveUtils';
+import dotenv from "dotenv";
+import mysql, { Connection, RowDataPacket } from "mysql2/promise";
+import { Readable } from "stream";
+import { uploadToGoogleDrive } from "../googleDrive/googleDriveUtils";
 dotenv.config();
 
 // Verificações das variáveis de ambiente
@@ -11,7 +11,7 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_NAME = process.env.DB_NAME;
 
 if (!DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
-  throw new Error('Variáveis de ambiente do banco de dados estão ausentes');
+  throw new Error("Variáveis de ambiente do banco de dados estão ausentes");
 }
 
 /**
@@ -33,21 +33,24 @@ export type Reuniao = {
   data_inicio: string;
   operadora_id: number;
   folder?: string;
-}
+};
 /**
  * Atualiza a URL de gravação de uma reunião no banco de dados com base no ID externo.
  * @param recordId - O ID externo da reunião (ex: 'Rec-1234')
  * @param link - A URL da gravação a ser associada
  */
 // Processa a reunião e envia o arquivo ao Google Drive
-export async function processReuniao(recordId: string, fileBuffer: Readable): Promise<string> {
-
+export async function processReuniao(
+  recordId: string,
+  fileBuffer: Readable,
+  publicS3Link: string
+): Promise<string> {
   const connection = await createDbConnection();
 
   try {
-    console.log('Iniciando processamento da reunião id ' + recordId + '...');
+    console.log("Iniciando processamento da reunião id " + recordId + "...");
 
-    const [rows] = await connection.execute(
+    const [rows] = (await connection.execute(
       `SELECT r.id, r.cliente_id, r.medico_id, r.data_inicio, r.operadora_id,
               o.folder as folder
        FROM telemed.reuniao r
@@ -55,7 +58,7 @@ export async function processReuniao(recordId: string, fileBuffer: Readable): Pr
        WHERE r.reuniao_external_id = ?
        LIMIT 1`,
       [recordId]
-    ) as RowDataPacket[];
+    )) as RowDataPacket[];
 
     const reunioes: Reuniao[] = rows.map((row: Reuniao) => ({
       id: row.id,
@@ -68,7 +71,7 @@ export async function processReuniao(recordId: string, fileBuffer: Readable): Pr
 
     if (rows.length === 0) {
       console.log(`Nenhuma reunião encontrada para o ID: ${recordId}`);
-      throw new Error('Reunião não encontrada');
+      throw new Error("Reunião não encontrada");
     }
 
     const reuniao = rows[0];
@@ -78,29 +81,46 @@ export async function processReuniao(recordId: string, fileBuffer: Readable): Pr
     const timestamp = Date.now();
 
     const dataFormatada = dataInicio
-      .toLocaleString('pt-BR', { timeZone: 'UTC' })
-      .replace(/[^\d]/g, '')
+      .toLocaleString("pt-BR", { timeZone: "UTC" })
+      .replace(/[^\d]/g, "")
       .slice(0, 12);
 
     const filename = `r_${reuniao.id}_c_${reuniao.cliente_id}_m_${reuniao.medico_id}_${dataFormatada}_${timestamp}.mp4`;
     const folder = reuniao.folder || process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-    const link = await uploadToGoogleDrive(fileBuffer, filename, folder);
+    const link = await gerarLink(fileBuffer, filename, folder, publicS3Link);
 
     const [result] = await connection.execute(
-      'UPDATE reuniao r SET url_gravacao = ? WHERE r.reuniao_external_id = ?',
+      "UPDATE reuniao r SET url_gravacao = ? WHERE r.reuniao_external_id = ?",
       [link, recordId]
     );
 
     // mysql2 retorna um tipo RowDataPacket[], o segundo retorno é sempre um resultado
     const affectedRows = (result as mysql.ResultSetHeader).affectedRows;
-    console.log(`✅ Reunião atualizada com sucesso: ${affectedRows} linha(s) afetada(s)`);
+    console.log(
+      `✅ Reunião atualizada com sucesso: ${affectedRows} linha(s) afetada(s)`
+    );
 
     return link;
   } catch (error) {
-    console.error('Erro ao processar a reunião:', error);
-    throw new Error('Erro ao acessar ou atualizar a reunião');
+    console.error("Erro ao processar a reunião:", error);
+    throw new Error("Erro ao acessar ou atualizar a reunião");
   } finally {
     await connection.end();
   }
+}
+
+async function gerarLink(
+  fileBuffer: Readable,
+  filename: string,
+  folder: string,
+  publicS3Link: string
+) {
+  let link = publicS3Link;
+  try {
+    link = await uploadToGoogleDrive(fileBuffer, filename, folder);
+  } catch (error) {
+    link = publicS3Link;
+  }
+  return link;
 }
