@@ -6,7 +6,7 @@
     "clean": "rm -rf dist lambda-package lambda.zip lambda",
     "build": "npm run clean && tsc && cp admobi4tech-a4fedc848dcb.json lambda-package/admobi4tech-a4fedc848dcb.json && cp package.json lambda-package/package.json && cp .env lambda-package/.env && npm run install-prod-deps",
     "install-prod-deps": "npm install --ommit=dev --prefix lambda-package",
-    "zip-deploy": "cd lambda-package && zip -r ../lambda.zip . && cd ..",
+    "zip-deploy": "cd lambda-package && tar.exe -a -c -f ../lambda.zip * && cd ..",
     "upload-lambda": "aws lambda update-function-code --function-name s3-to-google-drive --zip-file fileb://lambda.zip",
     "deploy": "npm run build && npm run zip-deploy && npm run upload-lambda"
   },
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",
     "@types/node": "^22.15.17",
+    "cross-zip": "^4.0.1",
     "typescript": "^5.8.3"
   }
 }

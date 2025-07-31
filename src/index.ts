@@ -60,14 +60,13 @@ function extractS3Info(record: S3EventRecord): {
     throw new Error("Informações do bucket ou key ausentes no evento S3.");
   }
 
-  return { bucketName, objectKey, publicLink: getS3PublicUrl(record) };
-}
-
-function getS3PublicUrl(record: S3EventRecord): string {
-  const { bucketName, objectKey } = extractS3Info(record);
-  return `https://${bucketName}.s3.${
-    process.env.AWS_REGION
-  }.amazonaws.com/${encodeURIComponent(objectKey)}`;
+  return {
+    bucketName,
+    objectKey,
+    publicLink: `https://${bucketName}.s3.${
+      process.env.AWS_REGION
+    }.amazonaws.com/${encodeURIComponent(objectKey)}`,
+  };
 }
 
 /**
